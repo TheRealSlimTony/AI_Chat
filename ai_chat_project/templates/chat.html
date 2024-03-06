@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat con Django</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('mensajeForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const autorValue = document.getElementById('autor').value;
+                const mensajeValue = document.getElementById('mensaje').value;
+                const chatBox = document.getElementById('chatBox');
+
+                // Agregar el mensaje del usuario al chatBox
+                chatBox.innerHTML += `<div><strong>${autorValue}</strong>: ${mensajeValue}</div>`;
+
+                const data = {
+                    autor: autorValue,
+                    mensaje: mensajeValue
+                };
+
+                // Enviar la pregunta al endpoint de mensajería y a search_question
+                fetch('/api/mensajes/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    body: JSON.stringify(data)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('La respuesta de la red no fue ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Luego de guardar el mensaje, buscar respuesta con search_question
+                    return fetch('/api/search_question/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({ prompt: mensajeValue })
+                    });
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('La respuesta de la red no fue ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Agregar la respuesta al chatBox
+                    chatBox.innerHTML += `<div><strong>Respuesta</strong>: ${data.result}</div>`;
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    chatBox.innerHTML += `<div>Error: No se pudo enviar el mensaje.</div>`;
+                });
+            });
+
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
+        });
+    </script>
+</head>
+<body>
+    <form id="mensajeForm">
+        {% csrf_token %}
+        <input type="text" id="autor" name="autor" placeholder="Ingresa tu nombre">
+        <textarea id="mensaje" name="mensaje" placeholder="Ingresa tu mensaje aquí"></textarea>
+        <button type="submit">Enviar Mensaje</button>
+    </form>
+    <div id="chatBox">
+        <!-- Aquí se mostrarán los mensajes y respuestas -->
+    </div>
+</body>
+</html>

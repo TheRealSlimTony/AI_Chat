@@ -1,4 +1,6 @@
+from django.shortcuts import render
 from rest_framework import generics
+from rest_framework import status
 from .models import Mensaje
 from .serializers import MensajeSerializer, QuestionSerializer
 from django.http import HttpResponse
@@ -27,12 +29,21 @@ class SearchQuestion(APIView):
             # Crea una instancia de VectorialDatabase
             vectordb = VectorialDatabase()
 
+            vectordb = VectorialDatabase(persist_directory="docs/chroma")
             # Realiza la búsqueda de similitud para la pregunta dada
             response, source = vectordb.similarity_search(question)
 
+            # aca falta conectar el api de open ai para que de una respuesta
+
             return Response({"result": response, "source": source})
         else:
-            return Response(serializer.errors, status=400)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+def chat_view(request):
+    print("aja")
+    mensajes = Mensaje.objects.all().order_by("creado_en")[:50]
+    return render(request, "chat.html", {"mensajes": mensajes})
 
 
 def home(request):
