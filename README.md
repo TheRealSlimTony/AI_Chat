@@ -1,4 +1,4 @@
-# AI_Chat
+# AI_Chat endpoint
 
 AI_Chat is a Django-based project that leverages Django REST Framework (DRF) to create an API for a chat application integrated with AI functionalities. The project utilizes LangChain to handle document embeddings and similarity searches to provide intelligent responses based on the input prompts.
 
